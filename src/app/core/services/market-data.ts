@@ -55,8 +55,16 @@ export class MarketDataService implements OnDestroy {
   private ws: WebSocket | null = null;
   private reconnectAttempts = 0;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  private keepaliveTimer: ReturnType<typeof setInterval> | null = null;
   private subscribedSymbols = new Set<string>();
   private destroyed = false;
+
+  private readonly onVisibilityChange = (): void => {
+    if (!document.hidden && this.ws?.readyState !== WebSocket.OPEN && !this.reconnectTimer) {
+      this.reconnectAttempts = 0;
+      this.connectWebSocket();
+    }
+  };
 
   private readonly priceSubject = new Subject<PriceTick>();
   private readonly errorSubject = new Subject<string>();
@@ -70,6 +78,15 @@ export class MarketDataService implements OnDestroy {
 
   constructor(private readonly http: HttpClient) {
     this.connectWebSocket();
+    this.keepaliveTimer = setInterval(() => {
+      if (this.ws?.readyState === WebSocket.OPEN) {
+        this.wsSend({ type: 'ping' });
+      } else if (!this.reconnectTimer && !this.destroyed) {
+        this.reconnectAttempts = 0;
+        this.connectWebSocket();
+      }
+    }, 20_000);
+    document.addEventListener('visibilitychange', this.onVisibilityChange);
   }
 
   // ── REST ─────────────────────────────────────────────────────────────────
@@ -224,6 +241,8 @@ export class MarketDataService implements OnDestroy {
   ngOnDestroy(): void {
     this.destroyed = true;
     if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
+    if (this.keepaliveTimer) clearInterval(this.keepaliveTimer);
+    document.removeEventListener('visibilitychange', this.onVisibilityChange);
     this.ws?.close();
     this.priceSubject.complete();
     this.errorSubject.complete();

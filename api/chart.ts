@@ -1,4 +1,4 @@
-export default async function handler(req: Request): Promise<Response> {
+export async function GET(req: Request): Promise<Response> {
   const { searchParams } = new URL(req.url, 'http://localhost');
   const symbol = searchParams.get('symbol');
   const range = searchParams.get('range') ?? '3mo';

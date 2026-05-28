@@ -1,0 +1,193 @@
+:host {
+  display: block;
+  height: 100vh;
+  overflow: hidden;
+}
+
+// ── App root ───────────────────────────────────────────────────────────────
+.app-root {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--bg);
+  overflow: hidden;
+}
+
+// ── Header ─────────────────────────────────────────────────────────────────
+.app-header {
+  display: grid;
+  grid-template-columns: 180px 1fr auto;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 20px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.app-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.app-logo {
+  font-size: 1rem;
+  color: var(--accent);
+}
+
+.app-title {
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+}
+
+.app-header-center {
+  max-width: 480px;
+  width: 100%;
+  justify-self: center;
+}
+
+.app-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+// ── WebSocket indicator ────────────────────────────────────────────────────
+.ws-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ws-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-down);
+  flex-shrink: 0;
+  transition: background 0.3s;
+
+  .connected & {
+    background: var(--color-up);
+    box-shadow: 0 0 6px var(--color-up);
+    animation: pulse 2s infinite;
+  }
+}
+
+.ws-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+// ── Theme toggle ──────────────────────────────────────────────────────────
+.theme-toggle {
+  background: var(--hover-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 1rem;
+  width: 34px;
+  height: 34px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, border-color 0.15s;
+
+  &:hover {
+    background: var(--surface-elevated);
+    border-color: var(--accent);
+  }
+}
+
+// ── 4-panel grid ──────────────────────────────────────────────────────────
+.app-grid {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  grid-template-rows: 1fr auto auto;
+  grid-template-areas:
+    "watchlist chart"
+    "watchlist metrics"
+    "portfolio portfolio";
+  gap: 8px;
+  padding: 8px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.panel {
+  border-radius: var(--radius);
+  overflow: hidden;
+  min-height: 0;
+}
+
+.panel-watchlist {
+  grid-area: watchlist;
+  overflow-y: auto;
+}
+
+.panel-chart {
+  grid-area: chart;
+  min-height: 300px;
+}
+
+.panel-metrics {
+  grid-area: metrics;
+}
+
+.panel-portfolio {
+  grid-area: portfolio;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+// ── Responsive — single column below 900px ────────────────────────────────
+@media (max-width: 900px) {
+  :host {
+    height: auto;
+    overflow: auto;
+  }
+
+  .app-root {
+    height: auto;
+    overflow: auto;
+  }
+
+  .app-header {
+    grid-template-columns: auto 1fr auto;
+  }
+
+  .app-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    grid-template-areas:
+      "chart"
+      "metrics"
+      "watchlist"
+      "portfolio";
+    overflow: visible;
+  }
+
+  .panel-chart {
+    min-height: 320px;
+  }
+
+  .panel-watchlist {
+    max-height: 320px;
+  }
+
+  .panel-portfolio {
+    max-height: none;
+  }
+}

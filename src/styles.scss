@@ -1,1 +1,85 @@
-/* You can add global styles to this file, and also import other style files */
+// ── Reset ──────────────────────────────────────────────────────────────────
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+// ── Design tokens — dark theme (default) ───────────────────────────────────
+:root, [data-theme="dark"] {
+  --bg:               #0d0f14;
+  --surface:          #13161e;
+  --surface-elevated: #1c2030;
+  --border:           #252a38;
+  --hover-bg:         #1e2330;
+  --input-bg:         #191d28;
+  --tooltip-bg:       #1c2030;
+
+  --text-primary:     #e8ecf4;
+  --text-secondary:   #6b7490;
+
+  --accent:           #4f7eff;
+  --accent-glow:      rgba(79, 126, 255, 0.18);
+
+  --color-up:         #26c56e;
+  --color-up-alpha:   rgba(38, 197, 110, 0.12);
+  --candle-up:        #26c56e;
+  --candle-up-alpha:  rgba(38, 197, 110, 0.25);
+
+  --color-down:       #f0455a;
+  --color-down-alpha: rgba(240, 69, 90, 0.12);
+  --candle-down:      #f0455a;
+  --candle-down-alpha:rgba(240, 69, 90, 0.25);
+
+  --grid-color:       rgba(255, 255, 255, 0.04);
+
+  --skeleton-base:    #1c2030;
+  --skeleton-shine:   #252a3a;
+
+  --radius:           10px;
+}
+
+// ── Light theme ───────────────────────────────────────────────────────────
+[data-theme="light"] {
+  --bg:               #f0f2f7;
+  --surface:          #ffffff;
+  --surface-elevated: #ffffff;
+  --border:           #dde1ed;
+  --hover-bg:         #f4f6fb;
+  --input-bg:         #f9fafc;
+  --tooltip-bg:       #ffffff;
+
+  --text-primary:     #11151f;
+  --text-secondary:   #7480a0;
+
+  --accent:           #3b6ef0;
+  --accent-glow:      rgba(59, 110, 240, 0.15);
+
+  --color-up:         #1aad5e;
+  --color-up-alpha:   rgba(26, 173, 94, 0.1);
+  --candle-up:        #1aad5e;
+  --candle-up-alpha:  rgba(26, 173, 94, 0.2);
+
+  --color-down:       #e03349;
+  --color-down-alpha: rgba(224, 51, 73, 0.1);
+  --candle-down:      #e03349;
+  --candle-down-alpha:rgba(224, 51, 73, 0.2);
+
+  --grid-color:       rgba(0, 0, 0, 0.05);
+
+  --skeleton-base:    #ebeef5;
+  --skeleton-shine:   #f4f6fb;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text-primary);
+}
+
+// ── Scrollbar ─────────────────────────────────────────────────────────────
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }

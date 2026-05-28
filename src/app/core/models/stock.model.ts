@@ -62,4 +62,3 @@ export interface SymbolSearchResponse {
   result: SymbolSearchResult[];
 }
 
-export type Resolution = '1' | '5' | '15' | '60' | 'D';

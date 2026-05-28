@@ -2,11 +2,11 @@
   <div class="chart-header">
     <span class="chart-symbol">{{ symbol() }}</span>
     <div class="resolution-tabs" role="tablist">
-      @for (r of resolutions; track r.value) {
+      @for (r of resolutions; track r.label) {
         <button
           role="tab"
           class="res-tab"
-          [class.active]="activeResolution().value === r.value"
+          [class.active]="activeResolution().label === r.label"
           (click)="setResolution(r)"
         >{{ r.label }}</button>
       }

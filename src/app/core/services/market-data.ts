@@ -1,15 +1,32 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, Subject, timer } from 'rxjs';
-import { catchError, distinctUntilKeyChanged, filter, map, share } from 'rxjs/operators';
+import { Observable, Subject } from 'rxjs';
+import { catchError, distinctUntilKeyChanged, map, share } from 'rxjs/operators';
 import {
   CandleResponse,
   CompanyProfile,
   Quote,
-  Resolution,
   SymbolSearchResponse,
 } from '../models/stock.model';
 import { environment } from '../../../environments/environment';
+
+interface YahooChartResponse {
+  chart: {
+    result: Array<{
+      timestamp: number[];
+      indicators: {
+        quote: Array<{
+          open: (number | null)[];
+          high: (number | null)[];
+          low: (number | null)[];
+          close: (number | null)[];
+          volume: (number | null)[];
+        }>;
+      };
+    }> | null;
+    error: { code: string; description: string } | null;
+  };
+}
 
 interface WsTradeMessage {
   type: 'trade';
@@ -31,7 +48,7 @@ const MAX_RECONNECT_ATTEMPTS = 5;
 const BASE_BACKOFF_MS = 1000;
 
 @Injectable({ providedIn: 'root' })
-export class FinnhubService implements OnDestroy {
+export class MarketDataService implements OnDestroy {
   private readonly baseUrl = environment.finnhubRestUrl;
   private readonly apiKey = environment.finnhubApiKey;
 
@@ -75,15 +92,42 @@ export class FinnhubService implements OnDestroy {
 
   getCandles(
     symbol: string,
-    resolution: Resolution,
     from: number,
     to: number,
   ): Observable<CandleResponse> {
+    const days = Math.round((to - from) / 86400);
+    const range = days <= 7 ? '5d' : days <= 30 ? '1mo' : days <= 90 ? '3mo' : '1y';
+
     return this.http
-      .get<CandleResponse>(`${this.baseUrl}/stock/candle`, {
-        params: this.params({ symbol, resolution, from: String(from), to: String(to) }),
-      })
-      .pipe(catchError((err) => this.handleError('getCandles', err)));
+      .get<YahooChartResponse>(
+        `${environment.yahooFinanceUrl}/v8/finance/chart/${encodeURIComponent(symbol)}`,
+        { params: new HttpParams({ fromObject: { interval: '1d', range } }) },
+      )
+      .pipe(
+        map((resp) => this.mapYahooResponse(resp)),
+        catchError((err) => this.handleError('getCandles', err)),
+      );
+  }
+
+  private mapYahooResponse(resp: YahooChartResponse): CandleResponse {
+    const result = resp.chart.result?.[0];
+    if (!result?.timestamp?.length) {
+      return { c: [], h: [], l: [], o: [], t: [], v: [], s: 'no_data' };
+    }
+    const q = result.indicators.quote[0];
+    const indices = result.timestamp.reduce<number[]>((acc, _, i) => {
+      if (q.close[i] != null) acc.push(i);
+      return acc;
+    }, []);
+    return {
+      t: indices.map((i) => result.timestamp[i]),
+      o: indices.map((i) => q.open[i] as number),
+      h: indices.map((i) => q.high[i] as number),
+      l: indices.map((i) => q.low[i] as number),
+      c: indices.map((i) => q.close[i] as number),
+      v: indices.map((i) => q.volume[i] as number),
+      s: 'ok',
+    };
   }
 
   getProfile(symbol: string): Observable<CompanyProfile> {
@@ -173,7 +217,7 @@ export class FinnhubService implements OnDestroy {
 
   private handleError(context: string, err: unknown): never {
     const message = err instanceof Error ? err.message : 'Unknown error';
-    console.error(`[FinnhubService.${context}]`, err);
+    console.error(`[MarketDataService.${context}]`, err);
     throw new Error(`Market data unavailable (${context}): ${message}`);
   }
 

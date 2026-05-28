@@ -9,7 +9,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { debounceTime, distinctUntilChanged, filter, switchMap } from 'rxjs/operators';
-import { FinnhubService } from '../../../core/services/finnhub';
+import { MarketDataService } from '../../../core/services/market-data';
 import { WatchlistService } from '../../../core/services/watchlist';
 import { SymbolSearchResult } from '../../../core/models/stock.model';
 
@@ -31,7 +31,7 @@ export class SearchBar {
   readonly error = signal<string | null>(null);
 
   private readonly destroyRef = inject(DestroyRef);
-  private readonly finnhub = inject(FinnhubService);
+  private readonly marketData = inject(MarketDataService);
   private readonly watchlist = inject(WatchlistService);
 
   constructor() {
@@ -45,7 +45,7 @@ export class SearchBar {
           this.loading.set(true);
           this.error.set(null);
           this.activeIndex.set(-1);
-          return this.finnhub.searchSymbol(q.trim());
+          return this.marketData.searchSymbol(q.trim());
         }),
       )
       .subscribe({

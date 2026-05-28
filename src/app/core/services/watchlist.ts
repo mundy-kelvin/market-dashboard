@@ -1,6 +1,6 @@
 import { computed, effect, Injectable, OnDestroy, signal } from '@angular/core';
 import { forkJoin, Subscription } from 'rxjs';
-import { FinnhubService } from './finnhub';
+import { MarketDataService } from './market-data';
 import { Stock } from '../models/stock.model';
 
 const STORAGE_KEY = 'md_watchlist_symbols';
@@ -17,8 +17,8 @@ export class WatchlistService implements OnDestroy {
 
   private readonly priceSubscription: Subscription;
 
-  constructor(private readonly finnhub: FinnhubService) {
-    this.priceSubscription = this.finnhub.prices$.subscribe((tick) => {
+  constructor(private readonly marketData: MarketDataService) {
+    this.priceSubscription = this.marketData.prices$.subscribe((tick) => {
       this.refreshPrice(tick.symbol, tick.price);
     });
 
@@ -29,8 +29,8 @@ export class WatchlistService implements OnDestroy {
     if (this.watchlist().some((s) => s.symbol === symbol)) return;
 
     forkJoin({
-      quote: this.finnhub.getQuote(symbol),
-      profile: this.finnhub.getProfile(symbol),
+      quote: this.marketData.getQuote(symbol),
+      profile: this.marketData.getProfile(symbol),
     }).subscribe({
       next: ({ quote, profile }) => {
         const stock: Stock = {
@@ -45,7 +45,7 @@ export class WatchlistService implements OnDestroy {
           volume: 0,
         };
         this.watchlist.update((list) => [...list, stock]);
-        this.finnhub.subscribeSymbol(symbol);
+        this.marketData.subscribeSymbol(symbol);
         this.persistToStorage();
       },
       error: (err: Error) => {
@@ -55,7 +55,7 @@ export class WatchlistService implements OnDestroy {
   }
 
   remove(symbol: string): void {
-    this.finnhub.unsubscribeSymbol(symbol);
+    this.marketData.unsubscribeSymbol(symbol);
     this.watchlist.update((list) => list.filter((s) => s.symbol !== symbol));
     if (this.selectedSymbol() === symbol) {
       this.selectedSymbol.set(null);

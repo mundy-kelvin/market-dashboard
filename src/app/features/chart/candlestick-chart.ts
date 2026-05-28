@@ -14,14 +14,14 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import * as d3 from 'd3';
-import { Candle, CandleResponse, Resolution } from '../../core/models/stock.model';
-import { FinnhubService } from '../../core/services/finnhub';
+import { Candle, CandleResponse } from '../../core/models/stock.model';
+import { MarketDataService } from '../../core/services/market-data';
 
-const RESOLUTIONS: { label: string; value: Resolution; days: number }[] = [
-  { label: '1D', value: '1', days: 1 },
-  { label: '1W', value: '15', days: 7 },
-  { label: '1M', value: '60', days: 30 },
-  { label: '3M', value: 'D', days: 90 },
+const RESOLUTIONS: { label: string; days: number }[] = [
+  { label: '1W', days: 7 },
+  { label: '1M', days: 30 },
+  { label: '3M', days: 90 },
+  { label: '1Y', days: 365 },
 ];
 
 @Component({
@@ -38,7 +38,7 @@ export class CandlestickChart implements AfterViewInit, OnDestroy {
   readonly symbol = input<string>('');
   readonly resolutions = RESOLUTIONS;
 
-  readonly activeResolution = signal<(typeof RESOLUTIONS)[number]>(RESOLUTIONS[3]);
+  readonly activeResolution = signal<(typeof RESOLUTIONS)[number]>(RESOLUTIONS[2]);
   readonly candles = signal<Candle[]>([]);
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
@@ -47,11 +47,11 @@ export class CandlestickChart implements AfterViewInit, OnDestroy {
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
 
-  constructor(private readonly finnhub: FinnhubService) {
+  constructor(private readonly marketData: MarketDataService) {
     effect(() => {
       const sym = this.symbol();
       const res = this.activeResolution();
-      if (sym) this.fetchCandles(sym, res.value, res.days);
+      if (sym) this.fetchCandles(sym, res.days);
     });
   }
 
@@ -70,7 +70,7 @@ export class CandlestickChart implements AfterViewInit, OnDestroy {
     this.activeResolution.set(res);
   }
 
-  private fetchCandles(symbol: string, resolution: Resolution, days: number): void {
+  private fetchCandles(symbol: string, days: number): void {
     this.loading.set(true);
     this.error.set(null);
     this.candles.set([]);
@@ -78,8 +78,8 @@ export class CandlestickChart implements AfterViewInit, OnDestroy {
     const to = Math.floor(Date.now() / 1000);
     const from = to - days * 86400;
 
-    this.finnhub
-      .getCandles(symbol, resolution, from, to)
+    this.marketData
+      .getCandles(symbol, from, to)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (resp: CandleResponse) => {
@@ -130,7 +130,10 @@ export class CandlestickChart implements AfterViewInit, OnDestroy {
 
     const defs = svg.append('defs');
     const clip = defs.append('clipPath').attr('id', 'chart-clip');
-    clip.append('rect').attr('width', width).attr('height', priceHeight + volHeight + gap);
+    clip
+      .append('rect')
+      .attr('width', width)
+      .attr('height', priceHeight + volHeight + gap);
 
     const priceG = svg
       .append('g')
@@ -144,11 +147,7 @@ export class CandlestickChart implements AfterViewInit, OnDestroy {
 
     // ── Scales ──────────────────────────────────────────────────────────────
     const xDomain = candles.map((c) => c.time);
-    const xScale = d3
-      .scaleBand<Date>()
-      .domain(xDomain)
-      .range([0, width])
-      .padding(0.2);
+    const xScale = d3.scaleBand<Date>().domain(xDomain).range([0, width]).padding(0.2);
 
     const priceExtent = [
       d3.min(candles, (c) => c.low) as number,
@@ -167,7 +166,8 @@ export class CandlestickChart implements AfterViewInit, OnDestroy {
 
     // ── Axes ────────────────────────────────────────────────────────────────
     const tickCount = Math.min(6, candles.length);
-    const xAxisScale = d3.scaleTime()
+    const xAxisScale = d3
+      .scaleTime()
       .domain([candles[0].time, candles[candles.length - 1].time])
       .range([0, width]);
 
@@ -271,9 +271,7 @@ export class CandlestickChart implements AfterViewInit, OnDestroy {
       const [mx] = d3.pointer(event);
       const nearest = candles.reduce((best, c) => {
         const cx = (xScale(c.time) ?? 0) + bandW / 2;
-        return Math.abs(cx - mx) < Math.abs((xScale(best.time) ?? 0) + bandW / 2 - mx)
-          ? c
-          : best;
+        return Math.abs(cx - mx) < Math.abs((xScale(best.time) ?? 0) + bandW / 2 - mx) ? c : best;
       });
       const cx = (xScale(nearest.time) ?? 0) + bandW / 2;
       const [, my] = d3.pointer(event);
@@ -286,7 +284,8 @@ export class CandlestickChart implements AfterViewInit, OnDestroy {
         .style('left', `${margin.left + cx + 10}px`)
         .style('top', `${margin.top + my - 10}px`)
         .html(
-          `<div class="tt-row"><span>O</span><span>${nearest.open.toFixed(2)}</span></div>` +
+          `<div class="tt-date">${nearest.time.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</div>` +
+            `<div class="tt-row"><span>O</span><span>${nearest.open.toFixed(2)}</span></div>` +
             `<div class="tt-row"><span>H</span><span>${nearest.high.toFixed(2)}</span></div>` +
             `<div class="tt-row"><span>L</span><span>${nearest.low.toFixed(2)}</span></div>` +
             `<div class="tt-row"><span>C</span><span>${nearest.close.toFixed(2)}</span></div>` +

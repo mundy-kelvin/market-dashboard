@@ -7,7 +7,7 @@ import {
   signal,
 } from '@angular/core';
 import { WatchlistService } from './core/services/watchlist';
-import { FinnhubService } from './core/services/finnhub';
+import { MarketDataService } from './core/services/market-data';
 import { WatchlistComponent } from './features/watchlist/watchlist';
 import { CandlestickChart } from './features/chart/candlestick-chart';
 import { MetricsStrip } from './features/metrics-strip/metrics-strip';
@@ -32,7 +32,7 @@ type Theme = 'dark' | 'light';
 })
 export class App implements OnInit {
   private readonly watchlistService = inject(WatchlistService);
-  private readonly finnhubService = inject(FinnhubService);
+  private readonly marketDataService = inject(MarketDataService);
 
   readonly selectedSymbol = computed(() => this.watchlistService.selectedSymbol() ?? '');
   readonly wsConnected = signal(false);
@@ -43,14 +43,14 @@ export class App implements OnInit {
     this.theme.set(saved === 'light' ? 'light' : 'dark');
     this.applyTheme(this.theme());
 
-    this.finnhubService.error$.subscribe((err) => {
+    this.marketDataService.error$.subscribe((err) => {
       if (err.includes('failed after')) {
         this.wsConnected.set(false);
       }
     });
 
     // Optimistic connected state — we set true after first price tick
-    this.finnhubService.prices$.subscribe(() => {
+    this.marketDataService.prices$.subscribe(() => {
       if (!this.wsConnected()) this.wsConnected.set(true);
     });
   }

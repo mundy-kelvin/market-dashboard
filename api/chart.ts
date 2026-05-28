@@ -1,11 +1,10 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  const { symbol, range = '3mo' } = req.query as Record<string, string>;
+export default async function handler(req: Request): Promise<Response> {
+  const { searchParams } = new URL(req.url);
+  const symbol = searchParams.get('symbol');
+  const range = searchParams.get('range') ?? '3mo';
 
   if (!symbol) {
-    res.status(400).json({ error: 'Missing required query param: symbol' });
-    return;
+    return Response.json({ error: 'Missing required query param: symbol' }, { status: 400 });
   }
 
   const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=${range}`;
@@ -19,11 +18,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
 
     const data: unknown = await upstream.json();
-    res
-      .status(upstream.status)
-      .setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300')
-      .json(data);
+    return Response.json(data, {
+      status: upstream.status,
+      headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300' },
+    });
   } catch {
-    res.status(502).json({ error: 'Failed to fetch from Yahoo Finance' });
+    return Response.json({ error: 'Failed to fetch from Yahoo Finance' }, { status: 502 });
   }
 }

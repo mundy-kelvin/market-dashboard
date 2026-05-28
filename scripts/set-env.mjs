@@ -14,7 +14,7 @@ if (!existsSync(devEnvPath)) {
   finnhubApiKey: '',
   finnhubWsUrl: 'wss://ws.finnhub.io',
   finnhubRestUrl: 'https://finnhub.io/api/v1',
-  yahooFinanceUrl: '/yahoo-finance',
+  yahooFinanceUrl: '/api/chart',
 };\n`);
   console.log('[set-env] environment.ts stub created.');
 }

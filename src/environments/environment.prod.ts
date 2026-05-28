@@ -3,5 +3,5 @@ export const environment = {
   finnhubApiKey: '',   // injected at build time via CI environment variable
   finnhubWsUrl: 'wss://ws.finnhub.io',
   finnhubRestUrl: 'https://finnhub.io/api/v1',
-  yahooFinanceUrl: '/api/yahoo-finance',
+  yahooFinanceUrl: '/api/chart',
 };

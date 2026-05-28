@@ -100,8 +100,8 @@ export class MarketDataService implements OnDestroy {
 
     return this.http
       .get<YahooChartResponse>(
-        `${environment.yahooFinanceUrl}/v8/finance/chart/${encodeURIComponent(symbol)}`,
-        { params: new HttpParams({ fromObject: { interval: '1d', range } }) },
+        environment.yahooFinanceUrl,
+        { params: new HttpParams({ fromObject: { symbol, range } }) },
       )
       .pipe(
         map((resp) => this.mapYahooResponse(resp)),

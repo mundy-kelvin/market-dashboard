@@ -1,19 +1,40 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+/**
+ * Catch-all proxy for Yahoo Finance API.
+ *
+ * Route: /api/yahoo-finance/**
+ * Forwards to: https://query1.finance.yahoo.com/**
+ *
+ * Strips the /api/yahoo-finance prefix and re-attaches the remaining path
+ * plus all original query parameters. Adds the User-Agent header that Yahoo
+ * requires to avoid 429/403 responses.
+ *
+ * Uses the Web Standards API (Request → Response) — no @vercel/node import
+ * needed. This format is compatible with all @vercel/node v3+ runtimes.
+ */
+export default async function handler(req: Request): Promise<Response> {
+  const { pathname, search } = new URL(req.url);
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  const segments = Array.isArray(req.query.path)
-    ? req.query.path
-    : [req.query.path as string];
+  // e.g. /api/yahoo-finance/v8/finance/chart/AAPL → /v8/finance/chart/AAPL
+  const upstreamPath = pathname.replace('/api/yahoo-finance', '');
+  const upstreamUrl = `https://query1.finance.yahoo.com${upstreamPath}${search}`;
 
-  const params = new URLSearchParams();
-  for (const [key, value] of Object.entries(req.query)) {
-    if (key !== 'path') params.set(key, value as string);
+  try {
+    const upstream = await fetch(upstreamUrl, {
+      headers: { 'User-Agent': 'Mozilla/5.0' },
+    });
+
+    const data: unknown = await upstream.json();
+
+    return Response.json(data, {
+      status: upstream.status,
+      headers: {
+        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+      },
+    });
+  } catch {
+    return Response.json(
+      { error: 'Failed to fetch from Yahoo Finance' },
+      { status: 502 },
+    );
   }
-
-  const url = `https://query1.finance.yahoo.com/${segments.join('/')}?${params}`;
-
-  const upstream = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-  const data = await upstream.json();
-
-  res.status(upstream.status).json(data);
 }

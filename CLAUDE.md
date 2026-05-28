@@ -247,22 +247,33 @@ Finnhub WS  →  MarketDataService.priceSubject
 
 **Production (Vercel):** The Vercel function `api/yahoo-finance/[...path].ts` handles
 all requests to `/api/yahoo-finance/**`. The production environment sets
-`yahooFinanceUrl: '/api/yahoo-finance'`. The function appends the `User-Agent` header
-and forwards the response verbatim.
+`yahooFinanceUrl: '/api/yahoo-finance'`. The function strips the `/api/yahoo-finance`
+prefix, appends the `User-Agent` header, and forwards the response verbatim.
 
 ```typescript
-// api/yahoo-finance/[...path].ts
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // segments = ['v8', 'finance', 'chart', 'AAPL']
-  // url = https://query1.finance.yahoo.com/v8/finance/chart/AAPL?interval=1d&range=3mo
-  const url = `https://query1.finance.yahoo.com/${segments.join('/')}?${params}`;
-  const upstream = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-  res.status(upstream.status).json(await upstream.json());
+// api/yahoo-finance/[...path].ts  — Web Standards API, no @vercel/node import
+export default async function handler(req: Request): Promise<Response> {
+  const { pathname, search } = new URL(req.url);
+  // /api/yahoo-finance/v8/finance/chart/AAPL → /v8/finance/chart/AAPL
+  const upstreamPath = pathname.replace('/api/yahoo-finance', '');
+  const upstreamUrl = `https://query1.finance.yahoo.com${upstreamPath}${search}`;
+
+  const upstream = await fetch(upstreamUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+  const data: unknown = await upstream.json();
+  return Response.json(data, { status: upstream.status });
 }
 ```
 
+**Why Web Standards API, not `VercelRequest`/`VercelResponse`?**
+The legacy `(req: VercelRequest, res: VercelResponse)` format requires the `@vercel/node`
+package to be resolvable at build time. With `@vercel/node` v3+ the canonical format is
+`Request → Response` (Web Standards). It has no imports, works with every runtime
+version, and is what Vercel recommends for new functions.
+
 The `api/tsconfig.json` is separate from the Angular tsconfig — it targets CommonJS /
-ES2020 so the Vercel Node runtime can execute it without a bundler.
+ES2020 so the Vercel Node runtime can execute it without a bundler. Vercel uses esbuild
+to bundle TypeScript functions; the `api/tsconfig.json` is used only for local type
+checking, not by Vercel's build pipeline.
 
 ### D3 ownership model
 
@@ -382,6 +393,7 @@ local dev.
 `vercel.json`:
 ```json
 {
+  "framework": null,
   "buildCommand": "npm run build",
   "outputDirectory": "dist/market-dashboard/browser",
   "rewrites": [
@@ -389,6 +401,13 @@ local dev.
   ]
 }
 ```
+
+**`"framework": null` is required.** Without it, Vercel detects `angular.json` and
+applies the Angular static-build preset. That preset treats the project as a pure static
+deployment and does not scan the `api/` directory for serverless functions — resulting
+in 404s with zero invocation logs (because the function was never deployed, not just
+erroring at runtime). Setting `framework: null` tells Vercel to use its default custom
+build pipeline, which always processes the `api/` directory.
 
 The rewrite rule sends all non-`/api/` paths to `index.html` (SPA behaviour). Requests
 to `/api/**` fall through to Vercel Functions.
@@ -501,6 +520,18 @@ abuse detection during reconnect storms.
 **`onBlur` delay in `SearchBar`.** `setTimeout(() => this.open.set(false), 150)` is
 intentional — without it, clicking a dropdown result fires `blur` before `click`,
 closing the dropdown before `selectResult()` runs.
+
+**Vercel `"framework": null` is mandatory.** If it is ever removed from `vercel.json`,
+Vercel will detect `angular.json`, apply the Angular static-build preset, and silently
+stop deploying the `api/yahoo-finance/[...path].ts` function. The symptom is a 404 for
+`/api/yahoo-finance/**` with zero entries in the Functions log tab — because the
+function was never deployed, not because it threw an error at runtime.
+
+**`api/` function format must stay Web Standards.** Do not revert to the
+`(req: VercelRequest, res: VercelResponse)` callback style. That format requires
+`@vercel/node` types to be resolved at build time and ties the function to a specific
+runtime version. The `Request → Response` Web Standards format has no imports, is
+forward-compatible, and is what Vercel recommends for Node.js functions v3+.
 
 **Yahoo Finance null candles.** Yahoo returns `null` for candles on non-trading days.
 `mapYahooResponse()` filters these out using `.reduce()` with a null guard on `q.close[i]`.

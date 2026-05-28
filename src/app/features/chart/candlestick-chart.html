@@ -1,1 +1,35 @@
-<p>candlestick-chart works!</p>
+<div class="chart-shell">
+  <div class="chart-header">
+    <span class="chart-symbol">{{ symbol() }}</span>
+    <div class="resolution-tabs" role="tablist">
+      @for (r of resolutions; track r.value) {
+        <button
+          role="tab"
+          class="res-tab"
+          [class.active]="activeResolution().value === r.value"
+          (click)="setResolution(r)"
+        >{{ r.label }}</button>
+      }
+    </div>
+  </div>
+
+  <div class="chart-body" #chartContainer>
+    @if (loading()) {
+      <div class="skeleton-wrap">
+        <div class="skeleton-bar" style="height: 70%"></div>
+        <div class="skeleton-bar" style="height: 30%"></div>
+      </div>
+    } @else if (error()) {
+      <div class="chart-error">
+        <span class="error-icon">&#9888;</span>
+        <span>{{ error() }}</span>
+      </div>
+    } @else if (!candles().length && symbol()) {
+      <div class="chart-empty">No candle data available</div>
+    } @else if (!symbol()) {
+      <div class="chart-empty">Select a ticker to view chart</div>
+    } @else {
+      <svg #svgEl class="chart-svg"></svg>
+    }
+  </div>
+</div>

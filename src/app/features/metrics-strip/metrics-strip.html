@@ -1,1 +1,39 @@
-<p>metrics-strip works!</p>
+@if (stock(); as s) {
+  <div class="ms-shell">
+    <div class="ms-main">
+      <div
+        class="ms-price"
+        [ngClass]="{ 'flash-up': priceFlash() === 'up', 'flash-down': priceFlash() === 'down' }"
+      >{{ formattedPrice }}</div>
+
+      <div class="ms-change" [class.positive]="s.changePct >= 0" [class.negative]="s.changePct < 0">
+        <span>{{ formattedChange }}</span>
+        <span class="ms-pct">{{ formattedChangePct }}</span>
+      </div>
+    </div>
+
+    <div class="ms-metrics">
+      <div class="ms-metric">
+        <span class="ms-label">Market Cap</span>
+        <span class="ms-value">{{ formattedMarketCap }}</span>
+      </div>
+      <div class="ms-metric">
+        <span class="ms-label">Volume</span>
+        <span class="ms-value">{{ formattedVolume }}</span>
+      </div>
+      <div class="ms-metric ms-range-metric">
+        <span class="ms-label">52W Range</span>
+        <div class="ms-range-bar-wrap">
+          <span class="ms-range-lo">{{ s.low52w.toFixed(2) }}</span>
+          <div class="ms-range-track" role="progressbar" [attr.aria-valuenow]="rangePosition">
+            <div class="ms-range-fill" [style.width.%]="rangePosition"></div>
+            <div class="ms-range-marker" [style.left.%]="rangePosition"></div>
+          </div>
+          <span class="ms-range-hi">{{ s.high52w.toFixed(2) }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+} @else {
+  <div class="ms-empty">Select a ticker to see details</div>
+}

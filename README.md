@@ -1,59 +1,59 @@
-# MarketDashboard
+# MarketDash
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.13.
+A real-time market data dashboard built with **Angular 21**, **D3.js**, and the **Finnhub API**. Demonstrates senior-level architecture decisions: Angular Signals throughout, OnPush change detection on every component, CDK virtual scroll, WebSocket with exponential-backoff reconnect, and a pure-D3 candlestick chart.
 
-## Development server
+---
 
-To start a local development server, run:
+## Setup
 
-```bash
-ng serve
+### 1. Get a free Finnhub API key
+
+Sign up at [finnhub.io](https://finnhub.io) → Dashboard → copy your API key. The free tier supports real-time WebSocket quotes and REST candle data for US stocks.
+
+### 2. Set the API key locally
+
+Edit `src/environments/environment.ts` (this file is git-ignored — never commit a real key):
+
+```ts
+export const environment = {
+  production: false,
+  finnhubApiKey: 'YOUR_KEY_HERE',
+  finnhubWsUrl: 'wss://ws.finnhub.io',
+  finnhubRestUrl: 'https://finnhub.io/api/v1',
+};
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+### 3. Install and run
 
 ```bash
-ng generate component component-name
+npm install
+npm start          # http://localhost:4200
+npm run build      # production build → dist/
+npm run deploy     # deploy to GitHub Pages at /market-dashboard/
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+---
 
-```bash
-ng generate --help
-```
+## Architecture notes
 
-## Building
+### Signal-based state (no NgRx, no BehaviorSubject)
 
-To build the project run:
+All shared state lives in `WatchlistService` and `PortfolioService` as `signal()` primitives. Derived values (`isEmpty`, `selectedStock`, `totalValue`, `dayChange`) are `computed()` — they re-evaluate only when their signal dependencies change. Components read signals directly in templates; Angular's fine-grained reactivity ensures only the affected DOM nodes re-render.
 
-```bash
-ng build
-```
+`BehaviorSubject` was deliberately avoided: signals integrate with the template change detection cycle without requiring `| async` pipes and compose cleanly with `effect()` for side-effects like localStorage persistence.
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+### WebSocket reconnect strategy
 
-## Running unit tests
+`FinnhubService` manages a single shared WebSocket. On close or error it schedules a reconnect with exponential backoff (`delay = 1000 × 2^attempt`, capped at 5 attempts). All subscribed symbols are re-sent on reconnect. A single `prices$` observable (backed by a `Subject`) fans out to `WatchlistService`, which writes updates back into the watchlist signal — keeping the WS connection fully decoupled from components.
 
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+### Virtual scroll rationale
 
-```bash
-ng test
-```
+The watchlist uses `CdkVirtualScrollViewport` with `itemSize=56`. For a typical watchlist of 10–30 symbols the gain is modest, but it demonstrates awareness of rendering cost at scale (1000+ symbols in a screener). Each row renders at constant cost regardless of list length; Angular's `*cdkVirtualFor` only creates DOM nodes for the visible viewport slice.
 
-## Running end-to-end tests
+### OnPush everywhere
 
-For end-to-end (e2e) testing, run:
+Every component uses `ChangeDetectionStrategy.OnPush`. Combined with signals, this means Angular's change detector visits a component subtree only when a signal it reads has been written. The app can handle high-frequency WebSocket ticks (sub-second AAPL quotes during market hours) without degrading UI responsiveness.
 
-```bash
-ng e2e
-```
+### D3 integration
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+D3 owns the SVG imperatively inside `CandlestickChart.render()`, called from an Angular `effect()` (re-runs when `symbol` or `resolution` signals change) and a `ResizeObserver` callback. Angular only manages the host element and the loading/error overlay — the chart canvas is fully D3-owned, avoiding the impedance mismatch of trying to data-bind SVG attributes through Angular's template engine.

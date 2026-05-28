@@ -1,12 +1,11 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
-import { NgClass } from '@angular/common';
 import { Stock } from '../../core/models/stock.model';
 import { PriceBadge } from '../../shared/components/price-badge/price-badge';
 
 @Component({
   selector: 'app-watchlist-item',
   standalone: true,
-  imports: [NgClass, PriceBadge],
+  imports: [PriceBadge],
   templateUrl: './watchlist-item.html',
   styleUrl: './watchlist-item.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

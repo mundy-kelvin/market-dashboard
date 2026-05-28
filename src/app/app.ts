@@ -6,7 +6,6 @@ import {
   OnInit,
   signal,
 } from '@angular/core';
-import { NgClass } from '@angular/common';
 import { WatchlistService } from './core/services/watchlist';
 import { FinnhubService } from './core/services/finnhub';
 import { WatchlistComponent } from './features/watchlist/watchlist';
@@ -21,7 +20,6 @@ type Theme = 'dark' | 'light';
   selector: 'app-root',
   standalone: true,
   imports: [
-    NgClass,
     WatchlistComponent,
     CandlestickChart,
     MetricsStrip,

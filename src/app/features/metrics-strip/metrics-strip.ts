@@ -6,7 +6,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { NgClass, PercentPipe } from '@angular/common';
+import { NgClass } from '@angular/common';
 import { WatchlistService } from '../../core/services/watchlist';
 import {
   formatChange,

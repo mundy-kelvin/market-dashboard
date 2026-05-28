@@ -1,13 +1,12 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NgClass } from '@angular/common';
 import { Stock } from '../../core/models/stock.model';
 import { formatChange, formatPercent, formatPrice } from '../../core/utils/format.util';
 
 @Component({
   selector: 'app-portfolio-row',
   standalone: true,
-  imports: [FormsModule, NgClass],
+  imports: [FormsModule],
   templateUrl: './portfolio-row.html',
   styleUrl: './portfolio-row.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

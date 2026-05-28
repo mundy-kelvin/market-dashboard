@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { NgClass } from '@angular/common';
 import { WatchlistService } from '../../core/services/watchlist';
 import { PortfolioService } from '../../core/services/portfolio';
 import { PortfolioRow } from './portfolio-row';
@@ -9,7 +8,7 @@ import { Stock } from '../../core/models/stock.model';
 @Component({
   selector: 'app-portfolio',
   standalone: true,
-  imports: [NgClass, PortfolioRow],
+  imports: [PortfolioRow],
   templateUrl: './portfolio.html',
   styleUrl: './portfolio.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

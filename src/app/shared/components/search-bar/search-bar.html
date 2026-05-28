@@ -1,1 +1,44 @@
-<p>search-bar works!</p>
+<div class="search-wrap">
+  <div class="search-input-row">
+    <span class="search-icon">&#128269;</span>
+    <input
+      class="search-input"
+      type="text"
+      placeholder="Search symbol or company…"
+      autocomplete="off"
+      [formControl]="searchCtrl"
+      (focus)="onFocus()"
+      (blur)="onBlur()"
+      aria-label="Search for a stock symbol"
+      aria-autocomplete="list"
+      [attr.aria-expanded]="open()"
+    />
+    @if (loading()) {
+      <span class="search-spinner"></span>
+    }
+  </div>
+
+  @if (open() && results().length) {
+    <ul class="search-dropdown" role="listbox">
+      @for (r of results(); track r.symbol; let i = $index) {
+        <li
+          class="search-result"
+          role="option"
+          [class.active]="activeIndex() === i"
+          [class.added]="isInWatchlist(r.symbol)"
+          (mousedown)="selectResult(r)"
+        >
+          <span class="sr-symbol">{{ r.symbol }}</span>
+          <span class="sr-desc">{{ r.description }}</span>
+          @if (isInWatchlist(r.symbol)) {
+            <span class="sr-added">Added</span>
+          }
+        </li>
+      }
+    </ul>
+  }
+
+  @if (error()) {
+    <div class="search-error">{{ error() }}</div>
+  }
+</div>

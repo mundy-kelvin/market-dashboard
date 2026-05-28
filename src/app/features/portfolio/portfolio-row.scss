@@ -1,0 +1,67 @@
+:host {
+  display: contents;
+}
+
+.pr-row {
+  td {
+    padding: 10px 14px;
+    font-size: 0.825rem;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+  }
+
+  &:last-child td {
+    border-bottom: none;
+  }
+
+  &:hover td {
+    background: var(--hover-bg);
+  }
+}
+
+.pr-symbol {
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.pr-shares-input {
+  width: 72px;
+  padding: 4px 8px;
+  background: var(--input-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 0.825rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  transition: border-color 0.15s, box-shadow 0.15s;
+
+  &:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+  }
+
+  &::-webkit-inner-spin-button,
+  &::-webkit-outer-spin-button {
+    opacity: 0.4;
+  }
+}
+
+.pr-pnl {
+  font-weight: 600;
+
+  .pr-pct {
+    font-size: 0.72rem;
+    opacity: 0.85;
+  }
+
+  &.positive { color: var(--color-up); }
+  &.negative { color: var(--color-down); }
+}
+
+.pr-total {
+  font-weight: 600;
+}

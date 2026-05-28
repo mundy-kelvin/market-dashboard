@@ -1,1 +1,57 @@
-<p>portfolio works!</p>
+<div class="pf-shell">
+  <div class="pf-header">
+    <span class="pf-title">Portfolio</span>
+  </div>
+
+  @if (watchlist.isEmpty()) {
+    <div class="pf-empty">Add stocks to your watchlist first.</div>
+  } @else if (rows().length === 0) {
+    <div class="pf-empty">
+      Enter share counts below to track your portfolio value.
+      <table class="pf-table" aria-label="Portfolio">
+        <thead>
+          <tr>
+            <th>Symbol</th><th>Shares</th><th>Current Price</th><th>Day P&amp;L</th><th>Total Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (stock of allWatchlistStocks(); track stock.symbol) {
+            <app-portfolio-row
+              [stock]="stock"
+              [shares]="getShares(stock.symbol)"
+              (sharesChanged)="onSharesChanged(stock.symbol, $event)"
+            />
+          }
+        </tbody>
+      </table>
+    </div>
+  } @else {
+    <div class="pf-table-wrap">
+      <table class="pf-table" aria-label="Portfolio">
+        <thead>
+          <tr>
+            <th>Symbol</th><th>Shares</th><th>Current Price</th><th>Day P&amp;L</th><th>Total Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (stock of allWatchlistStocks(); track stock.symbol) {
+            <app-portfolio-row
+              [stock]="stock"
+              [shares]="getShares(stock.symbol)"
+              (sharesChanged)="onSharesChanged(stock.symbol, $event)"
+            />
+          }
+        </tbody>
+        <tfoot>
+          <tr class="pf-totals">
+            <td colspan="3">Total</td>
+            <td [class.positive]="dayChangePositive" [class.negative]="!dayChangePositive">
+              {{ formattedDayChange }}
+            </td>
+            <td class="pf-total-val">{{ formattedTotal }}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  }
+</div>

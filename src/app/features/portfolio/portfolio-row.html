@@ -1,1 +1,20 @@
-<p>portfolio-row works!</p>
+<tr class="pr-row">
+  <td class="pr-symbol">{{ stock().symbol }}</td>
+  <td class="pr-shares">
+    <input
+      class="pr-shares-input"
+      type="number"
+      min="0"
+      step="1"
+      [value]="shares()"
+      (change)="onSharesInput($event)"
+      aria-label="Shares for {{ stock().symbol }}"
+    />
+  </td>
+  <td class="pr-price">{{ formattedPrice }}</td>
+  <td class="pr-pnl" [class.positive]="dayPnl() >= 0" [class.negative]="dayPnl() < 0">
+    <div>{{ formattedDayPnl }}</div>
+    <div class="pr-pct">{{ formattedPct }}</div>
+  </td>
+  <td class="pr-total">{{ formattedTotal }}</td>
+</tr>

@@ -1,1 +1,6 @@
-<p>price-badge works!</p>
+<div class="badge-wrap" [ngClass]="{ 'flash-up': flash() === 'up', 'flash-down': flash() === 'down' }">
+  <span class="badge-price">{{ formattedPrice }}</span>
+  <span class="badge-pct" [class.positive]="changePct() >= 0" [class.negative]="changePct() < 0">
+    {{ formattedPct }}
+  </span>
+</div>

@@ -1,1 +1,22 @@
-<p>watchlist works!</p>
+<div class="wl-shell">
+  <div class="wl-header">
+    <span class="wl-title">Watchlist</span>
+    <span class="wl-count">{{ watchlistService.watchlist().length }}</span>
+  </div>
+
+  @if (watchlistService.isEmpty()) {
+    <div class="wl-empty">
+      <span>Search for a ticker to begin</span>
+    </div>
+  } @else {
+    <cdk-virtual-scroll-viewport itemSize="56" class="wl-viewport">
+      <app-watchlist-item
+        *cdkVirtualFor="let stock of watchlistService.watchlist(); trackBy: trackBySymbol"
+        [stock]="stock"
+        [selected]="watchlistService.selectedSymbol() === stock.symbol"
+        (removed)="onRemove($event)"
+        (selected$)="onSelect($event)"
+      />
+    </cdk-virtual-scroll-viewport>
+  }
+</div>

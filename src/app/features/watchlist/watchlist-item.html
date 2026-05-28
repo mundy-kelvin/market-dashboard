@@ -1,1 +1,21 @@
-<p>watchlist-item works!</p>
+<div
+  class="wl-item"
+  [class.selected]="selected()"
+  (click)="onSelect()"
+  role="button"
+  tabindex="0"
+  (keydown.enter)="onSelect()"
+>
+  <div class="wl-info">
+    <span class="wl-symbol">{{ stock().symbol }}</span>
+    <span class="wl-name">{{ stock().name }}</span>
+  </div>
+  <div class="wl-right">
+    <app-price-badge [price]="stock().price" [changePct]="stock().changePct" />
+    <button
+      class="wl-remove"
+      aria-label="Remove {{ stock().symbol }}"
+      (click)="onRemove($event)"
+    >&#x2715;</button>
+  </div>
+</div>
